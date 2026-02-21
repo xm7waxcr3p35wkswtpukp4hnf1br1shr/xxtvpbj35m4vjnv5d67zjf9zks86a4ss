@@ -21,133 +21,115 @@
             height: 100%;
             object-fit: contain;
             background-color: black;
+            pointer-events: none;
         }
         
-        #permission-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: black;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
+        video::-webkit-media-controls {
+            display: none !important;
         }
         
-        .permission-box {
-            background-color: #1a1a1a;
-            padding: 30px;
-            border-radius: 12px;
-            text-align: center;
-            color: white;
-            max-width: 400px;
-            border: 1px solid #333;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        video::-webkit-media-controls-enclosure {
+            display: none !important;
         }
         
-        .permission-box h2 {
-            margin-bottom: 20px;
-            font-size: 24px;
-            color: #fff;
+        video::-webkit-media-controls-panel {
+            display: none !important;
         }
         
-        .permission-box p {
-            margin-bottom: 30px;
-            font-size: 16px;
-            color: #ccc;
-            line-height: 1.5;
+        video::-webkit-media-controls-play-button {
+            display: none !important;
         }
         
-        .permission-box button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            font-weight: bold;
+        video::-webkit-media-controls-start-playback-button {
+            display: none !important;
         }
         
-        .permission-box button:hover {
-            transform: scale(1.05);
+        video::-webkit-media-controls-overlay-play-button {
+            display: none !important;
         }
         
-        .browser-hint {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #666;
+        video::-webkit-media-controls-timeline {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-current-time-display {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-time-remaining-display {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-mute-button {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-volume-slider {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-fullscreen-button {
+            display: none !important;
         }
     </style>
 </head>
 <body>
-    <div id="permission-overlay">
-        <div class="permission-box">
-            <h2></h2>
-            <p></p>
-            <button id="allow-button"></button>
-            <div class="browser-hint">
-
-            </div>
-        </div>
-    </div>
-
-    <video id="videoPlayer" controls style="display: none;">
+    <video id="videoPlayer" preload="auto" playsinline>
         <source src="" type="video/mp4" id="videoSource">
     </video>
 
     <script>
-        const overlay = document.getElementById('permission-overlay');
-        const allowButton = document.getElementById('allow-button');
-        const videoPlayer = document.getElementById('videoPlayer');
-        const videoSource = document.getElementById('videoSource');
-        
         const urlParams = new URLSearchParams(window.location.search);
         const videoFile = urlParams.get('v');
         
-        if (!videoFile) {
-            document.body.innerHTML = '<div style="color:white; padding:20px;"></div>';
-        } else {
+        if (videoFile) {
+            const videoPlayer = document.getElementById('videoPlayer');
+            const videoSource = document.getElementById('videoSource');
+            
             videoSource.src = videoFile;
             videoPlayer.load();
             videoPlayer.volume = 0.5;
+            
+            function forcePlay() {
+                videoPlayer.play()
+                    .then(() => {
+                        console.log('');
+                    })
+                    .catch(() => {
+                        setTimeout(forcePlay, 100);
+                    });
+            }
+            
+            videoPlayer.addEventListener('loadedmetadata', function() {
+                forcePlay();
+                
+                setTimeout(forcePlay, 1000);
+                
+                setTimeout(forcePlay, 2000);
+            });
+            
+            videoPlayer.addEventListener('ended', function() {
+                window.location.href = document.referrer || '/';
+            });
+            
+            if ('permissions' in navigator) {
+                navigator.permissions.query({ name: 'autoplay' })
+                    .then(permissionStatus => {
+                        console.log('', permissionStatus.state);
+                    })
+                    .catch(() => {});
+            }
         }
-        
-        allowButton.addEventListener('click', function() {
-            overlay.style.display = 'none';
-            
-            videoPlayer.style.display = 'block';
-            
-            videoPlayer.play()
-                .then(() => {
-                    console.log('');
-                    
-                    if ('mediaSession' in navigator) {
-                        navigator.mediaSession.setActionHandler('play', function() {});
-                    }
-                })
-                .catch(error => {
-                    console.log('', error);
-                    alert('');
-                });
-        });
         
         document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('dragstart', event => event.preventDefault());
+        document.addEventListener('copy', event => event.preventDefault());
         
-        videoPlayer.addEventListener('ended', function() {
-            window.location.href = document.referrer || '/';
+        const video = document.getElementById('videoPlayer');
+        video.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
         });
-        
-        if ('permissions' in navigator) {
-            navigator.permissions.query({ name: 'autoplay' })
-                .then(permissionStatus => {
-                    console.log('', permissionStatus.state);
-                })
-                .catch(() => {});
-        }
     </script>
 </body>
 </html>
