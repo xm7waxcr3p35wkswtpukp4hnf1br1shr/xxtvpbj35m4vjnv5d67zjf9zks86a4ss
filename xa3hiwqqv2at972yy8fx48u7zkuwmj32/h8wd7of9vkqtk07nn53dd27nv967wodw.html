@@ -73,7 +73,7 @@
 </head>
 <body>
     <div class="video-container" oncontextmenu="return false;">
-        <video id="videoPlayer" preload="auto" volume="0.5" oncontextmenu="return false;">
+        <video id="videoPlayer" preload="auto" volume="0.5" oncontextmenu="return false;" playsinline>
             <source src="" type="video/mp4" id="videoSource">
         </video>
     </div>
@@ -98,9 +98,21 @@
             videoPlayer.load();
             videoPlayer.volume = 0.5;
             
-            videoPlayer.play().catch(e => {
-                console.log('Автозапуск заблокирован браузером');
+            videoPlayer.addEventListener('ended', function() {
+                window.location.href = document.referrer || '/';
             });
+            
+            const playPromise = videoPlayer.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    
+                    document.addEventListener('click', function playOnClick() {
+                        videoPlayer.play();
+                        document.removeEventListener('click', playOnClick);
+                    });
+                });
+            }
         }
         
         const video = document.getElementById('videoPlayer');
