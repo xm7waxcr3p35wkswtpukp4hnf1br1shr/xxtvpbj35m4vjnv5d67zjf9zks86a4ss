@@ -11,6 +11,10 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
         
         body {
@@ -35,24 +39,75 @@
             height: 100%;
             object-fit: contain;
             background-color: black;
+            pointer-events: none;
+        }
+        
+        video::-webkit-media-controls {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-enclosure {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-panel {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-play-button {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-start-playback-button {
+            display: none !important;
+        }
+        
+        video::-moz-range-track {
+            display: none;
+        }
+        
+        video::-moz-progress-bar {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="video-container">
-        <video id="videoPlayer" controls autoplay>
+    <div class="video-container" oncontextmenu="return false;">
+        <video id="videoPlayer" preload="auto" volume="0.5" oncontextmenu="return false;">
             <source src="" type="video/mp4" id="videoSource">
         </video>
     </div>
 
     <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        
+        document.addEventListener('dragstart', event => event.preventDefault());
+        
+        document.addEventListener('copy', event => event.preventDefault());
+        document.addEventListener('cut', event => event.preventDefault());
+        document.addEventListener('paste', event => event.preventDefault());
+        
         const urlParams = new URLSearchParams(window.location.search);
         const videoFile = urlParams.get('v');
         
         if (videoFile) {
-            document.getElementById('videoSource').src = videoFile;
-            document.getElementById('videoPlayer').load();
+            const videoSource = document.getElementById('videoSource');
+            const videoPlayer = document.getElementById('videoPlayer');
+            
+            videoSource.src = videoFile;
+            videoPlayer.load();
+            videoPlayer.volume = 0.5;
+            
+            videoPlayer.play().catch(e => {
+                console.log('Автозапуск заблокирован браузером');
+            });
         }
+        
+        const video = document.getElementById('videoPlayer');
+        video.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
     </script>
 </body>
 </html>
