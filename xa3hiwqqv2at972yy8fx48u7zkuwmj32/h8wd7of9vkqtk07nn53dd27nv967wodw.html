@@ -93,30 +93,6 @@
         video::-webkit-media-controls-overlay-play-button {
             display: none !important;
         }
-        
-        video::-moz-controls {
-            display: none !important;
-        }
-        
-        video::-moz-play-button {
-            display: none !important;
-        }
-        
-        video::-ms-controls {
-            display: none !important;
-        }
-        
-        video::-ms-play-button {
-            display: none !important;
-        }
-        
-        video::-webkit-media-controls-overlay-enclosure {
-            display: none !important;
-        }
-        
-        #startTrigger {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -126,13 +102,9 @@
         </video>
     </div>
 
-    <button id="startTrigger" style="display: none;"></button>
-
     <script>
         document.addEventListener('contextmenu', event => event.preventDefault());
-        
         document.addEventListener('dragstart', event => event.preventDefault());
-        
         document.addEventListener('copy', event => event.preventDefault());
         document.addEventListener('cut', event => event.preventDefault());
         document.addEventListener('paste', event => event.preventDefault());
@@ -143,23 +115,50 @@
         if (videoFile) {
             const videoSource = document.getElementById('videoSource');
             const videoPlayer = document.getElementById('videoPlayer');
+            const permissionMessage = document.getElementById('permission-message');
             
             videoSource.src = videoFile;
             videoPlayer.load();
             videoPlayer.volume = 0.5;
             
-            function playVideo() {
-                videoPlayer.play().then(() => {
-                    console.log('');
-                }).catch(error => {
-                    console.log('', error);
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: 'Video Player',
+                    artist: 'gothviolence.com',
+                    album: 'Video Content'
                 });
             }
             
+            async function requestAutoplayPermission() {
+                try {
+                    videoPlayer.muted = true;
+                    await videoPlayer.play();
+                    
+                    permissionMessage.style.display = 'block';
+                    
+                    document.addEventListener('click', function enableAudio() {
+                        videoPlayer.muted = false;
+                        permissionMessage.style.display = 'none';
+                        document.removeEventListener('click', enableAudio);
+                    });
+                    
+                } catch (error) {
+                    console.log('', error);
+                    
+                    permissionMessage.textContent = '';
+                    permissionMessage.style.display = 'block';
+                    
+                    document.addEventListener('click', function startVideo() {
+                        videoPlayer.muted = false;
+                        videoPlayer.play();
+                        permissionMessage.style.display = 'none';
+                        document.removeEventListener('click', startVideo);
+                    }, { once: true });
+                }
+            }
+            
             window.addEventListener('load', () => {
-                setTimeout(() => {
-                    playVideo();
-                }, 100);
+                setTimeout(requestAutoplayPermission, 100);
             });
             
             videoPlayer.addEventListener('ended', function() {
@@ -178,12 +177,13 @@
             return false;
         });
         
-        setTimeout(() => {
-            const videoPlayer = document.getElementById('videoPlayer');
-            if (videoPlayer.paused) {
-                videoPlayer.play().catch(e => console.log(''));
-            }
-        }, 1000);
+        if ('permissions' in navigator) {
+            navigator.permissions.query({ name: 'autoplay' as PermissionName }).then(permissionStatus => {
+                console.log('', permissionStatus.state);
+            }).catch(() => {
+                console.log('');
+            });
+        }
     </script>
 </body>
 </html>
